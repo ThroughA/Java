@@ -24,6 +24,7 @@ public class EmployeeMaintenanceJSON {
 	private String search;
 	private String date;
 	private String companyId;
+	private String authorizedBy;
 	
 	public String getEmployeeId() {
 		return employeeId;
@@ -136,6 +137,12 @@ public class EmployeeMaintenanceJSON {
 	}
 	public void setCompanyId(String companyId) {
 		this.companyId = companyId;
+	}
+	public String getAuthorizedBy() {
+		return authorizedBy;
+	}
+	public void setAuthorizedBy(String authorizedBy) {
+		this.authorizedBy = authorizedBy;
 	}
 	
 	

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.fillingstation.constants.IQueryConstants;
 import com.fillingstation.json.EmployeeAttendanceJSON;
@@ -44,6 +45,12 @@ public class EmployeeLogic {
 	  static String Status;
 	  static String role;
 	  static String dept;
+	  
+	  static String existingTotalWorkHour;
+	  static String  inPauseTime;
+	 static  String pauseTimeWorkHour;
+
+
 	  
 	
 	/*
@@ -123,6 +130,7 @@ public class EmployeeLogic {
 	        	       	String firstname=result.getString("FirstName");
 	        	       String lastname=result.getString("LastName");
 	        	       String role=result.getString("Role");
+	        	       String department=result.getString("Department");
 	        	       permission=result.getString("Permission");
 	        	       String name=firstname+" "+lastname;
 	        	       String querySelect2=IQueryConstants.COMPANY_NAME;
@@ -148,9 +156,10 @@ public class EmployeeLogic {
 				
 				}     
 	        	       
-	        	       reportAndCount.setUserName(name);
-	        	       reportAndCount.setEmployeeId(empId) ;
-	        	       reportAndCount.setRole(role);
+	        	   reportAndCount.setUserName(name);
+	        	   reportAndCount.setEmployeeId(empId) ;
+	        	   reportAndCount.setRole(role);
+	        	   reportAndCount.setDepartment(department);
 			       reportAndCount.setCompanyId(companyId);
 			       reportAndCount.setCompanyName(companyName);
 		        	  
@@ -162,7 +171,7 @@ public class EmployeeLogic {
 				    	lockList=EmployeeLogic.LockList(companyId);
 				    	
 				    	//employeePermisionlist=EmployeeLogic.GetPermissionDetails(config);
-				    	System.out.println("cjhecking"+reportAndCount.getEmployeeDepartmentlist());
+				    	System.out.println("checking"+reportAndCount.getEmployeeDepartmentlist());
 				    	reportAndCount.setEmployeeDepartmentlist(employeeDepartmentlist);
 				    	reportAndCount.setEmployeeRolelist(employeeRolelist);
 				    	reportAndCount.setEmployeePermisionlist(employeePermisionlist);
@@ -990,6 +999,33 @@ public static int EmployeeCheckin(EmployeeAttendanceJSON details) {
 			    System.out.println("updated the employee checkin details........");
 			    details.setEmployeeName("");
 			}else {
+				
+			    
+		    	int checkOutValid=CheckoutValidation(details);
+				if(checkOutValid==1) {
+					    int pauseValid=PauseinValidation(details);
+					    if(pauseValid==0) {
+				    	System.out.println("Already checkedIn and Checked OUt so pausing checkin time");
+				    	String querySelect2=IQueryConstants.EMP_PAUSETIMEIN_UPDATE;
+						PreparedStatement preparedStmt2= connection.prepareStatement(querySelect2);
+						 preparedStmt2.setString(1,details.getCheckInTime());   
+						preparedStmt2.setString(2,details.getCompanyId());
+						preparedStmt2.setString(3,details.getEmployeeId());
+						preparedStmt2.setString(4,details.getDate());
+						preparedStmt2.executeUpdate();
+						System.out.println("paused time for first time is inserted");
+						details.setEmployeeName("");
+					    }
+					    else {
+							
+							System.out.println("you are not checkedout already");
+							details.setEmployeeName("ALREADY_CHECKIN");
+							System.out.println("Already checkedIn");
+						}
+				
+				}else {
+					
+				System.out.println("you are not checkedout already");
 				details.setEmployeeName("ALREADY_CHECKIN");
 				System.out.println("Already checkedIn");
 			}
@@ -998,7 +1034,7 @@ public static int EmployeeCheckin(EmployeeAttendanceJSON details) {
 		    System.out.println("completed checkin returing to webservice............");
 		 
 			connection.close(); 
-			
+			}
 			}
 			else {
 				details.setEmployeeName("BLOCKED");
@@ -1174,7 +1210,7 @@ public static int vaildEmployeeId(EmployeeAttendanceJSON details) {
 	
 /*
  * function to calculate the total work hour on clicking the checkout button
- * after calculation checkouttime and totl work hour will be updated into DB
+ * after calculation checkouttime and total work hour will be updated into DB
  */
 
 public static int EmployeeCheckout(EmployeeAttendanceJSON details) throws ParseException {
@@ -1198,13 +1234,23 @@ public static int EmployeeCheckout(EmployeeAttendanceJSON details) throws ParseE
 			}
 		else {
 			details.setEmployeeName("NOT_CHECKED_IN");
-		    
 			System.out.println("employee not checked in so checkout is not permitted..............");
 		}
 	}else{
+		
+		int pauseValid=PauseinValidation(details);
+		if(pauseValid==1) {
+			 MultipleTotalWorkCalculation(details,connection);
+	    	 details.setEmployeeName("");
+	    }else{
+		
+		System.out.println("already checkedout");
+		details.setEmployeeName("ALREADY_CHECKOUT");
+	    }
+		/*
 		details.setEmployeeName("ALREADY_CHECKOUT");
 		System.out.println("employee Id "+details.getEmployeeId()+ " is already checked out............");
-		
+		*/
 	}
 			
 	}
@@ -1263,15 +1309,17 @@ public static void TotalWorkCalculation(EmployeeAttendanceJSON details,Connectio
 		    		Status="A";
 		    	}
 		    	*/
-	    	System.out.println("got the employee details for checkout fully............");
-	String querySelect1=IQueryConstants.EMP_CHECKOUTUPDATE;
-	PreparedStatement preparedStmt1 = connection.prepareStatement(querySelect1);
-	    preparedStmt1.setString(1,details.getCheckOutTime());
-		preparedStmt1.setString(2,totalWorkHour);
+	    System.out.println("got the employee details for checkout fully............");
+		String querySelect1=IQueryConstants.EMP_CHECKOUTUPDATE;
+		PreparedStatement preparedStmt1 = connection.prepareStatement(querySelect1);
+		preparedStmt1.setString(1,details.getCheckOutTime());
+		preparedStmt1.setString(2,details.getCheckOutTime());
+		
+		preparedStmt1.setString(3,totalWorkHour);
 		//preparedStmt1.setString(3,Status);
-	    preparedStmt1.setString(3,details.getEmployeeId());
-	    preparedStmt1.setString(4,details.getDate());
-	    preparedStmt1.setString(5,details.getCompanyId());
+	    preparedStmt1.setString(4,details.getEmployeeId());
+	    preparedStmt1.setString(5,details.getDate());
+	    preparedStmt1.setString(6,details.getCompanyId());
 	    preparedStmt1.executeUpdate();
 	    System.out.println("completed checking out updation returing to webservice............");
 	    details.setEmployeeName("");
@@ -1279,6 +1327,118 @@ public static void TotalWorkCalculation(EmployeeAttendanceJSON details,Connectio
 	
 
 }
+
+
+
+/*
+ *  TotalWorkCalcaltion
+ */
+public static void MultipleTotalWorkCalculation(EmployeeAttendanceJSON details,Connection connection) throws SQLException, ParseException {
+	String val=null;
+	 System.out.println("in getting checkin time............");
+	 
+	    System.out.println("getting already existing totalworkhour from DB"+details.getEmployeeId()+details.getCompanyId()+details.getDate());
+	    String querySelect=IQueryConstants.EMP_SELECT_INPAUSETIME;
+		PreparedStatement preparedStmt=connection.prepareStatement(querySelect);
+		preparedStmt.setString(1,details.getEmployeeId());
+		preparedStmt.setString(2,details.getDate());
+		preparedStmt.setString(3,details.getCompanyId());
+        ResultSet rs=preparedStmt.executeQuery();
+       while(rs.next()) {
+    	   checkinTime=rs.getString("InPauseTime");
+    	 	System.out.println("sandy");
+	    inPauseTime=rs.getString("InPauseTime");
+	    
+	    System.out.println("inpausetime..."+inPauseTime +"/t val"+val);
+	    }
+	    System.out.println("inpausetime..."+inPauseTime +"/t val"+val);
+	    System.out.println("inpausetime..."+details.getCheckOutTime());
+	    pauseTimeWorkHour=WorkCalculation(inPauseTime,details.getCheckOutTime());
+	    System.out.println("pausetime total work hour..."+pauseTimeWorkHour);
+		   
+	    /*
+	     * multiplle calculation
+	     */
+	    String querySelect1=IQueryConstants.EMP_SELECT_TOTALWORKHOUR1;
+		PreparedStatement preparedStmt1 = connection.prepareStatement(querySelect1);
+		    preparedStmt1.setString(1,details.getEmployeeId());
+		    preparedStmt1.setString(2,details.getCompanyId());
+		    preparedStmt1.setString(3,details.getDate());
+		    ResultSet result=preparedStmt1.executeQuery();
+		    while(result.next()) {
+		    existingTotalWorkHour=result.getString("TotalWorkHour");
+		    }
+		    System.out.println("calculated..."+existingTotalWorkHour);
+		    System.out.println("newly calculated totalworkhour..."+pauseTimeWorkHour);
+		    
+		    totalWorkHour=MultipleWorkCalculation(existingTotalWorkHour,pauseTimeWorkHour);
+		    System.out.println("pausetime total work hour..."+totalWorkHour);
+			
+			    
+	    	System.out.println("got the employee details for multiple checkout fully............");
+	String querySelect2=IQueryConstants.EMP_PAUSETIMEOUT_UPDATE;
+	PreparedStatement preparedStmt2 = connection.prepareStatement(querySelect2);
+	    preparedStmt2.setString(1,details.getCheckOutTime());
+		preparedStmt2.setString(2,totalWorkHour);
+	    preparedStmt2.setString(3,details.getEmployeeId());
+	    preparedStmt2.setString(4,details.getDate());
+	    preparedStmt2.setString(5,details.getCompanyId());
+	    preparedStmt2.executeUpdate();
+	    System.out.println("completed checking out updation returing to webservice............");
+	    details.setEmployeeName("");
+	    connection.close(); 
+	    
+	
+}
+
+/*
+*function for adding 2 total work
+*/
+private static String MultipleWorkCalculation(String checkInTime,String checkOutTime) throws ParseException{
+System.out.println("got the checkintime employee details for calculating checkout............"+checkinTime);
+
+SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+Date date1 = timeFormat.parse(checkInTime);
+Date date2 = timeFormat.parse(checkOutTime);
+
+long sum = date1.getTime() + date2.getTime();
+
+String totalWorkHour = timeFormat.format(new Date(sum));
+System.out.println("The sum is "+totalWorkHour);
+
+
+
+return totalWorkHour;
+}
+
+
+public static String WorkCalculation(String checkInTime,String checkOutTime) throws ParseException{
+System.out.println("got the checkintime employee details for calculating checkout............"+checkinTime);
+SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+System.out.println("calculating totalworking hour............");
+checkoutTime=checkOutTime;
+System.out.println("checkout time............"+checkoutTime);
+checkinTimecal=format.parse(checkInTime);
+System.out.println("checkin time cal............"+checkinTimecal);
+checkoutTimecal=format.parse(checkoutTime);
+System.out.println("checkout time cal............"+checkoutTimecal);
+difference = checkoutTimecal.getTime() - checkinTimecal.getTime();
+System.out.println("difference in  time ............"+difference);
+hh=String.format("%02d",difference / hour);
+mm=String.format("%02d",(difference % hour) / minute) ;
+ss=String.format("%02d",(difference % minute) / second);
+totalWorkHour=hh+":"+mm+":"+ss;
+System.out.println("completed calculating  totalworkhour............"+totalWorkHour);
+return totalWorkHour;
+}
+
+
+
+
+
+
 
 /*
  * function to check whether employee is checked in before checking out,
@@ -1305,12 +1465,13 @@ private static int CheckinValidation(EmployeeAttendanceJSON details) {
     	   System.out.println("checkIn"+checkinTime);
        }
        if(checkinTime.equals("-")) {
-    	   flag=0;
+    	   flag=0;//NOT YET CHECKED IN
     	   System.out.println("checkIn"+flag);
            
        }
        else {
-    	   flag=1;
+    	   flag=1;//ALREADY CHECKED IN
+
        }
         
 	} catch (Exception e) {
@@ -1322,6 +1483,55 @@ private static int CheckinValidation(EmployeeAttendanceJSON details) {
 	   
 	return flag;
 }
+
+
+/*
+ * function to check whether employee is checked in before checking out,
+ * checking whether the employee is checked in already to prevent more than one checkin and
+ * checkout without checkin once 
+ */
+
+private static int PauseinValidation(EmployeeAttendanceJSON details) {
+
+	int flag = 1;
+	Connection connection=null;
+	String checkinTime = null;
+	try {
+		System.out.println("in checkIn validaation..........");
+		connection=DBUtil.getDBConnection();
+		
+		String querySelect=IQueryConstants.EMP_SELECT_INPAUSETIME;
+		PreparedStatement preparedStmt=connection.prepareStatement(querySelect);
+		preparedStmt.setString(1,details.getEmployeeId());
+		preparedStmt.setString(2,details.getDate());
+		preparedStmt.setString(3,details.getCompanyId());
+        ResultSet rs=preparedStmt.executeQuery();
+       while(rs.next()) {
+    	   checkinTime=rs.getString("InPauseTime");
+    	   System.out.println("InPauseTime"+checkinTime);
+       }
+       if(checkinTime.equals("-")) {
+    	   flag=0;//NOT YET Paused IN
+    	   System.out.println("InPauseTime"+flag);
+           
+       }
+       else {
+    	   flag=1;//ALREADY Paused IN
+
+       }
+        
+	} catch (Exception e) {
+		e.printStackTrace();
+	  }finally {
+		DBUtil.closeConnection(connection);
+	    }
+	System.out.println("result flag..."+flag);
+	   
+	return flag;
+}
+
+
+
 
 /*
 * function for checkout validation
@@ -1344,10 +1554,10 @@ private static int CheckoutValidation(EmployeeAttendanceJSON details) {
     	   checkoutTime=rs.getString("CheckoutTime");
        }
        if(checkoutTime.equals("-")) {
-    	   flag=0;
+    	   flag=0; //Not checked out Already
        }
        else {
-    	   flag=1;
+    	   flag=1;//checked out Already
        }
         
 	} catch (Exception e) {
@@ -1370,11 +1580,29 @@ public static int Authorization(EmployeeMaintenanceJSON details) {
 	try {
 		System.out.println("going to set supervisor authorization............");
 		connection =DBUtil.getDBConnection();
+		String name="-";
+		String querySelect0=IQueryConstants.AUTHORIZER_NAME;
+		PreparedStatement preparedStmt0 = connection.prepareStatement(querySelect0);
+		preparedStmt0.setString(1,details.getEmployeeId());
+		preparedStmt0.setString(2,details.getCompanyId());
+		
+	    
+		ResultSet rs=preparedStmt0.executeQuery();
+	
+		 while(rs.next()) {
+	    	   String firstName=rs.getString("FirstName");
+	    	   String lastName=rs.getString("LastName");
+	 	       name=firstName+" "+lastName;
+	       }
+	       
 		String querySelect=IQueryConstants.SUP_AUTHORIZATION;
 		PreparedStatement preparedStmt = connection.prepareStatement(querySelect);
 		    preparedStmt.setInt(1,1);
-		    preparedStmt.setString(2,details.getDate());
-		    preparedStmt.setString(3,details.getCompanyId());
+		    preparedStmt.setString(2,name);
+		    preparedStmt.setString(3,details.getDate());
+		   
+		    preparedStmt.setString(4,details.getCompanyId());
+		   
 		    
 		    preparedStmt.executeUpdate();
 		    System.out.println("supervisor authorization done successfully............");

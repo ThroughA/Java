@@ -12,7 +12,7 @@ public interface IQueryConstants {
 
     String ROLE_PERMISSION="SELECT Permission FROM EmployeeConfig where Role = ? And CompanyId = ? ";
 
-    String EMP_GET_DEPT="SELECT DISTINCT Department FROM EmployeeConfig WHERE CompanyId = ? And Role <> 'Propertier'";
+    String EMP_GET_DEPT="SELECT DISTINCT Department FROM EmployeeConfig WHERE CompanyId = ?";
 
     String EMP_GET_ROLE="SELECT DISTINCT Role FROM EmployeeConfig WHERE CompanyId = ? And Role <> 'Propertier'";
 
@@ -39,9 +39,8 @@ public interface IQueryConstants {
     
     String EMP_UNBLOCK="UPDATE EmployeeTable SET Block = 0 WHERE EmployeeId = ? And CompanyId = ? ";
 
-	
-	
 	String EMPLOYEE_ATTENDANCE="SELECT  EA.EmployeeId ,EA.Name,EA.CheckInTime,EA.CheckOutTime,EA.Status,E.MobileNo FROM EmployeeAttendanceTable EA INNER JOIN EmployeeTable E Where EA.EmployeeId=E.EmployeeId AND EA.CompanyId=E.CompanyId AND date(Date) = ? AND E.CompanyId = ?  AND EA.RemoveStatus=0 ";
+	
 	
 	
 	
@@ -79,9 +78,32 @@ public interface IQueryConstants {
 	String EMP_SELECT_CHECKINTIME="SELECT CheckinTime FROM EmployeeAttendanceTable WHERE EmployeeId = ? AND date(Date) = ? AND CompanyId = ? ";
 	
 	
-	String EMP_CHECKOUTUPDATE="UPDATE EmployeeAttendanceTable SET CheckoutTime = ? , TotalWorkHour = ? "
+	String EMP_CHECKOUTUPDATE="UPDATE EmployeeAttendanceTable SET CheckoutTime = ? , OutPauseTime = ? , TotalWorkHour = ? "
 								+ " WHERE EmployeeId = ? AND date(Date) = ? AND CompanyId = ? ";
 
+	
+	
+
+    String EMP_PAUSETIME_SELECT = "SELECT PauseTime FROM EmployeeAttendanceTable WHERE CompanyId = ? ";
+
+	String EMP_PAUSETIMEIN_UPDATE = "UPDATE EmployeeAttendanceTable SET InPauseTime = ? WHERE CompanyId = ? AND EmployeeId = ? AND date(Date) = ? " ;
+
+	String EMP_PAUSETIME_SELECTTIME="SELECT SELECT PauseTime FROM EmployeeAttendanceTable WHERE CompanyId = ?  " ;
+
+	String EMP_PAUSETIMEOUT_UPDATE = "UPDATE EmployeeAttendanceTable SET InPauseTime = '-', InPauseTime = '-' ,CheckoutTime = ? , TotalWorkHour = ? "
++ " WHERE EmployeeId = ? AND date(Date) = ? AND CompanyId = ? ";
+
+	String EMP_SELECT_INPAUSETIME = "SELECT InPauseTime FROM EmployeeAttendanceTable WHERE EmployeeId = ? AND date(Date) = ? AND CompanyId = ? " ; 
+			
+	String EMP_SELECT_TOTALWORKHOUR1="SELECT TotalWorkHour from EmployeeAttendanceTable WHERE EmployeeId = ? AND CompanyId = ? AND date(Date) = ? " ;
+	
+
+	
+	
+	
+	
+	
+	
 	String EMP_SELECT_CHECKOUTTIME="SELECT CheckoutTime FROM EmployeeAttendanceTable WHERE EmployeeId = ? AND date(Date) = ? AND CompanyId = ? ";
 
 	
@@ -99,7 +121,7 @@ public interface IQueryConstants {
 	
 	
 	String EMP_DAILYREPORT="SELECT EA.EmployeeId,EA.Name,EA.CheckinTime,EA.CheckoutTime,EA.TotalWorkHour,EA.Status,"
-			+ "E.Type,E.Department FROM EmployeeTable E INNER JOIN EmployeeAttendanceTable EA ON EA.EmployeeId=E.EmployeeId AND EA.CompanyId=E.CompanyId WHERE date(Date) = ? AND EA.CompanyId = ? And RemoveStatus=0  ";
+			+ "E.Type,E.Department ,AuthorizedBy FROM EmployeeTable E INNER JOIN EmployeeAttendanceTable EA ON EA.EmployeeId=E.EmployeeId AND EA.CompanyId=E.CompanyId WHERE date(Date) = ? AND EA.CompanyId = ? And RemoveStatus=0 ";
 
 	
 	String EMP_DAILYREPORTPRESENTCOUNT="SELECT (SELECT COUNT(EmployeeId) FROM EmployeeAttendanceTable WHERE Type = ? AND date(Date) = ? AND Status = 'P' AND CompanyId = ? AND RemoveStatus=0 )as PermanentEmployeePresentCount," 
@@ -133,7 +155,7 @@ public interface IQueryConstants {
 	
 	String EMP_SELECT_TOTALWORKHOUR="SELECT TotalWorkhour from EmployeeAttendanceTable where employeeid = ? and month(Date) = ? And year(Date) = ? and companyid = ? ";
 	
-	String EMP_MONTHLY_TOTALWORKHOUR="select (sec_to_time(sum(time_to_sec(totalworkhour)) )) As TotalWorkhour from EmployeeAttendanceTable where employeeid= ? and month(Date) = ? And year(Date) = ? and CompanyId = ?  ";
+	String EMP_MONTHLY_TOTALWORKHOUR="select CAST((sec_to_time(sum(time_to_sec(totalworkhour)) )) as char) As TotalWorkhour from EmployeeAttendanceTable where employeeid= ? and month(Date) = ? And year(Date) = ? and CompanyId = ?  ";
     
 	  
 	
@@ -150,7 +172,7 @@ public interface IQueryConstants {
 	
 	String EMP_SELECT_PERIODTOTALWORKHOUR="SELECT TotalWorkhour from EmployeeAttendanceTable where employeeid = ? and date(Date) between ? And  ? and companyid = ? ";
 
-	String EMP_PERIOD_TOTALWORKHOUR="select (sec_to_time(sum(time_to_sec(totalworkhour))))AS TotalWorkHour  from EmployeeAttendanceTable where employeeid= ? and date(Date) between ? and ? and CompanyId =? ";
+	String EMP_PERIOD_TOTALWORKHOUR="select concat('',sec_to_time(sum(time_to_sec(totalworkhour)))) AS TotalWorkHour  from EmployeeAttendanceTable where employeeid= ? and date(Date) between ? and ? and CompanyId =? ";
       
 	
 	
@@ -163,7 +185,9 @@ public interface IQueryConstants {
 
 	String EMP_GET_AUTHORIZATIONDETAILS="SELECT Authorization FROM EmployeeAttendanceTable WHERE Date = ? ";
 
-	String SUP_AUTHORIZATION="UPDATE EmployeeAttendanceTable SET Authorization = ? WHERE date(Date) = ? And CompanyId = ? ";
+	String AUTHORIZER_NAME= "select FirstName, LastName from EmployeeTable WHERE EmployeeId = ? And CompanyId = ? ";
+	
+	String SUP_AUTHORIZATION="UPDATE EmployeeAttendanceTable SET Authorization = ? ,AuthorizedBy = ? WHERE date(Date) = ? And CompanyId = ? ";
 
 
 	

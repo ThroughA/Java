@@ -19,7 +19,7 @@ public class EmployeeReportJSON {
 	String status;
 	String EmployeeName;
 	String mobileNo;
-	
+	String authorizedBy;
 	public String getRole() {
 		return role;
 	}
@@ -192,5 +192,12 @@ public class EmployeeReportJSON {
 	public void setNoOfDaysAbsent(int noOfDaysAbsent) {
 		this.noOfDaysAbsent = noOfDaysAbsent;
 	}
+	public String getAuthorizedBy() {
+		return authorizedBy;
+	}
+	public void setAuthorizedBy(String authorizedBy) {
+		this.authorizedBy = authorizedBy;
+	}
+	
 	
 	}

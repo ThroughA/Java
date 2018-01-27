@@ -143,6 +143,7 @@ public static ArrayList<EmployeeReportJSON> EmployeeMaintenanceReportSummary(Emp
 	        	employeeRetrieveobj.setEmployeeType(rs.getString("Type"));
 	        	employeeRetrieveobj.setDepartment(rs.getString("Department"));
 	        	employeeRetrieveobj.setStatus(rs.getString("Status"));
+	        	employeeRetrieveobj.setAuthorizedBy(rs.getString("AuthorizedBy"));
 	        	employeeRetrievelist.add(employeeRetrieveobj);
 	        	
 	        }

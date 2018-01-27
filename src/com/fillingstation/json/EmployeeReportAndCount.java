@@ -17,7 +17,7 @@ public class EmployeeReportAndCount {
 	private ArrayList<EmployeeConfigJSON> lockList;
 	
 	private String Role;
-	
+	private String department;
 	private String userName;
 	private String employeeId;
 	private String companyId;
@@ -98,6 +98,13 @@ public class EmployeeReportAndCount {
 	public void setLockList(ArrayList<EmployeeConfigJSON> lockList) {
 		this.lockList = lockList;
 	}
+	public String getDepartment() {
+		return department;
+	}
+	public void setDepartment(String department) {
+		this.department = department;
+	}
+	
 	
 	
 	}
